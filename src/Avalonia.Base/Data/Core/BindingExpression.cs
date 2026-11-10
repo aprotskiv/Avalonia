@@ -541,7 +541,19 @@ internal class BindingExpression : UntypedBindingExpressionBase, IDescription, I
             // If the target Visual has already been detached from the logical tree. (#22673)
             // Restriction is applied to Visual (Control, etc.), not to any ILogical.
             if (target is Visual targetVisual &&
-               (targetVisual.GetLogicalParent() == null) &&
+               (targetVisual.GetLogicalParent() == null
+                    // Note (should NOT be merged)
+                    // Somehow .GetLogicalParent() == null is enough for test Application.
+                    // But Unit Test (with TestRoot)
+                    //   see Removing_Checked_CheckBox_WithSelfBinding_From_Tree_Should_Not_Write_IsChecked_Back_To_Source
+                    // fails without
+                    //      .InheritanceParent == null
+                    // condition (because 'InheritanceParent' is set to NULL before 'Parent' is set to NULL)
+                    // TODO:
+                    //     a) adject unit test
+                    //     b) update condition (for example, introduce 'IsClearingLogicalParent' flag and set/reset in ISetLogicalParent.SetParent)
+                    || targetVisual.InheritanceParent == null
+                ) &&
                GetValue() == AvaloniaProperty.UnsetValue)
             {
                 return;
